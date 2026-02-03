@@ -2,3 +2,4 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+fer2013.csv

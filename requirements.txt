@@ -1,8 +1,8 @@
-flask
 streamlit
-opencv-python
+opencv-python-headless
 numpy
-fer==22.5.1
-mtcnn
 tensorflow
 keras
+fer==22.5.1
+mtcnn
+pillow
