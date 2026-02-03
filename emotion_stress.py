@@ -30,7 +30,7 @@ def analyze_frame(frame):
         stress_level = "Relaxed 😌"
         recommendations = [
             "Keep it up 👍",
-            "Good time to focus on tasks 🎯"
+            "Good time to focus 🎯"
         ]
 
     return {
