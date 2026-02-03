@@ -1,0 +1,8 @@
+flask
+streamlit
+opencv-python
+numpy
+fer==22.5.1
+mtcnn
+tensorflow
+keras

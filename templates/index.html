@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stress Detection System</title>
+
+<style>
+    :root {
+        --bg: linear-gradient(135deg, #667eea, #764ba2);
+        --card: rgba(255,255,255,0.15);
+        --text: #ffffff;
+    }
+
+    body.light {
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --text: #222;
+    }
+
+    * {
+        box-sizing: border-box;
+        font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text);
+        transition: 0.4s;
+    }
+
+    .card {
+        width: 950px;
+        padding: 30px;
+        border-radius: 18px;
+        background: var(--card);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 25px 45px rgba(0,0,0,0.25);
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .sub {
+        text-align: center;
+        opacity: 0.85;
+        margin-bottom: 25px;
+    }
+
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .toggle {
+        cursor: pointer;
+        padding: 8px 14px;
+        border-radius: 20px;
+        background: rgba(0,0,0,0.25);
+        color: white;
+    }
+
+    body.light .toggle {
+        background: #ddd;
+        color: #222;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    video {
+        width: 100%;
+        border-radius: 14px;
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+
+    button {
+        width: 100%;
+        margin-top: 15px;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .result {
+        background: rgba(255,255,255,0.18);
+        border-radius: 14px;
+        padding: 20px;
+    }
+
+    .value {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .bar {
+        height: 14px;
+        width: 100%;
+        background: rgba(255,255,255,0.3);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #ff416c, #ff4b2b);
+        transition: width 0.5s;
+    }
+
+    .trend {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .trend div {
+        width: 16px;
+        height: 40px;
+        background: rgba(255,255,255,0.4);
+        border-radius: 6px;
+        align-self: flex-end;
+    }
+
+    ul {
+        padding-left: 18px;
+    }
+</style>
+</head>
+
+<body>
+<div class="card">
+    <div class="top-bar">
+        <div></div>
+        <div class="toggle" onclick="toggleTheme()">🌙 / ☀️</div>
+    </div>
+
+    <h1>Real-Time Stress Detection</h1>
+    <div class="sub">AI-based Facial Expression Analysis</div>
+
+    <div class="grid">
+        <!-- Webcam -->
+        <div>
+            <video id="video" autoplay></video>
+            <canvas id="canvas" width="480" height="360" style="display:none;"></canvas>
+            <button onclick="start()">Start Live Analysis</button>
+        </div>
+
+        <!-- Results -->
+        <div class="result" id="result">
+            <div class="value">Emotion: — 😐</div>
+            <div class="value">Stress Level: —</div>
+            <div class="value">Stress Percentage: —%</div>
+
+            <div class="bar">
+                <div class="fill" id="fill"></div>
+            </div>
+
+            <div class="trend" id="trend"></div>
+
+            <p><b>Recommendations</b></p>
+            <ul></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const result = document.getElementById("result");
+    const fill = document.getElementById("fill");
+    const trend = document.getElementById("trend");
+
+    const emojiMap = {
+        happy: "😄",
+        sad: "😢",
+        angry: "😠",
+        fear: "😨",
+        disgust: "🤢",
+        surprise: "😲",
+        neutral: "😐"
+    };
+
+    let history = [];
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => video.srcObject = stream);
+
+    function start() {
+        setInterval(capture, 2000);
+    }
+
+    function capture() {
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(blob => {
+            const fd = new FormData();
+            fd.append("image", blob, "frame.jpg");
+
+            fetch("/analyze", { method: "POST", body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) return;
+
+                const emoji = emojiMap[data.emotion] || "😐";
+
+                result.innerHTML = `
+                    <div class="value">Emotion: ${data.emotion} ${emoji}</div>
+                    <div class="value">Stress Level: ${data.stress_level}</div>
+                    <div class="value">Stress Percentage: ${data.stress_percentage}%</div>
+                    <div class="bar"><div class="fill" id="fill"></div></div>
+                    <div class="trend" id="trend"></div>
+                    <p><b>Recommendations</b></p>
+                    <ul>${data.recommendations.map(r => `<li>${r}</li>`).join("")}</ul>
+                `;
+
+                document.getElementById("fill").style.width =
+                    data.stress_percentage + "%";
+
+                history.push(data.stress_percentage);
+                if (history.length > 10) history.shift();
+
+                const t = document.getElementById("trend");
+                history.forEach(v => {
+                    const bar = document.createElement("div");
+                    bar.style.height = v / 2 + "px";
+                    t.appendChild(bar);
+                });
+            });
+        }, "image/jpeg");
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle("light");
+    }
+</script>
+</body>
+</html>
