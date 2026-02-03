@@ -1,8 +1,4 @@
 streamlit
 streamlit-webrtc
-fer==22.5.1
-tensorflow
-keras
 numpy
-mtcnn
 av

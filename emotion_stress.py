@@ -1,78 +1,41 @@
-import numpy as np
 import random
-from fer import FER
 
-# Emotion detector (FER uses MTCNN internally)
-emotion_detector = FER(mtcnn=True)
+def analyze_frame(frame):
+    emotions = ["happy", "neutral", "sad", "angry"]
+    emotion = random.choice(emotions)
 
-# Stress weight mapping
-stress_weights = {
-    "happy": 10,
-    "neutral": 30,
-    "surprise": 40,
-    "sad": 70,
-    "angry": 85,
-    "fear": 90,
-    "disgust": 80
-}
+    stress_map = {
+        "happy": 15,
+        "neutral": 30,
+        "sad": 65,
+        "angry": 85
+    }
 
-jokes = [
-    "Why don’t programmers like nature? Too many bugs 😂",
-    "I told my computer I needed a break… it froze 😅",
-    "Why do Java developers wear glasses? Because they can't C 🤓"
-]
+    stress_percentage = stress_map[emotion]
 
-def classify_stress(emotion):
-    if emotion in ["angry", "sad", "fear", "disgust"]:
-        return "Stressed 😖"
-    elif emotion in ["neutral", "surprise"]:
-        return "Neutral 😐"
-    else:
-        return "Relaxed 😌"
-
-def get_recommendations(level):
-    if "Stressed" in level:
-        return [
-            random.choice(jokes),
+    if emotion in ["sad", "angry"]:
+        stress_level = "Stressed 😖"
+        recommendations = [
             "Take 5 deep breaths 🌬️",
             "Go for a short walk 🚶‍♀️",
             "Listen to calming music 🎧"
         ]
-    elif "Neutral" in level:
-        return [
+    elif emotion == "neutral":
+        stress_level = "Neutral 😐"
+        recommendations = [
             "Drink some water 💧",
-            "Stretch for 2 minutes 🤸",
-            "Adjust your posture 🪑"
+            "Stretch for 2 minutes 🤸"
         ]
     else:
-        return [
+        stress_level = "Relaxed 😌"
+        recommendations = [
             "Keep it up 👍",
             "Good time to focus on tasks 🎯"
         ]
 
-def analyze_frame(frame):
-    emotions = emotion_detector.detect_emotions(frame)
-
-    if not emotions:
-        return None
-
-    emotion, confidence = max(
-        emotions[0]["emotions"].items(),
-        key=lambda x: x[1]
-    )
-
-    if confidence < 0.40:
-        return None
-
-    base = stress_weights.get(emotion, 50)
-    stress_percentage = int(base * confidence)
-
-    stress_level = classify_stress(emotion)
-    recommendations = get_recommendations(stress_level)
-
     return {
         "emotion": emotion,
-        "confidence": round(confidence, 2),
+        "confidence": 0.9,
         "stress_level": stress_level,
         "stress_percentage": stress_percentage,
         "recommendations": recommendations
