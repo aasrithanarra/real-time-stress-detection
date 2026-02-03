@@ -1,11 +1,12 @@
+import numpy as np
 import random
 from fer import FER
 
-# Initialize emotion detector
+# Emotion detector (FER uses MTCNN internally)
 emotion_detector = FER(mtcnn=True)
 
-# -------------------- Stress Mapping --------------------
-STRESS_MAP = {
+# Stress weight mapping
+stress_weights = {
     "happy": 10,
     "neutral": 30,
     "surprise": 40,
@@ -15,66 +16,64 @@ STRESS_MAP = {
     "disgust": 80
 }
 
-JOKES = [
-    "Why don’t programmers like nature? Too many bugs 🐞",
-    "I told my computer I needed a break… it froze ❄️",
-    "Why did the computer go to therapy? It had too many issues 😄",
-    "Debugging is like being a detective in a crime movie 🔍",
+jokes = [
+    "Why don’t programmers like nature? Too many bugs 😂",
+    "I told my computer I needed a break… it froze 😅",
+    "Why do Java developers wear glasses? Because they can't C 🤓"
 ]
 
-# -------------------- Helper Functions --------------------
-def get_stress_level(score):
-    if score >= 70:
-        return "Stressed"
-    elif score >= 30:
-        return "Neutral"
+def classify_stress(emotion):
+    if emotion in ["angry", "sad", "fear", "disgust"]:
+        return "Stressed 😖"
+    elif emotion in ["neutral", "surprise"]:
+        return "Neutral 😐"
     else:
-        return "Relaxed"
-
+        return "Relaxed 😌"
 
 def get_recommendations(level):
-    if level == "Stressed":
+    if "Stressed" in level:
         return [
-            "Take slow deep breaths for 1 minute",
-            "Drink water 💧",
-            random.choice(JOKES),
-            "Take a short walk or stretch your body"
+            random.choice(jokes),
+            "Take 5 deep breaths 🌬️",
+            "Go for a short walk 🚶‍♀️",
+            "Listen to calming music 🎧"
         ]
-    elif level == "Neutral":
+    elif "Neutral" in level:
         return [
-            "Maintain good posture",
-            "Blink your eyes and relax facial muscles",
-            "Short breathing exercise recommended"
+            "Drink some water 💧",
+            "Stretch for 2 minutes 🤸",
+            "Adjust your posture 🪑"
         ]
     else:
         return [
-            "Great! Keep up the positive mood 😄",
-            "Good time to focus on productive work"
+            "Keep it up 👍",
+            "Good time to focus on tasks 🎯"
         ]
 
-
-# -------------------- Main Analyzer --------------------
 def analyze_frame(frame):
-    """
-    Input: BGR image (OpenCV frame)
-    Output: Dictionary with emotion, stress level, percentage, recommendations
-    """
-
     emotions = emotion_detector.detect_emotions(frame)
 
     if not emotions:
         return None
 
-    emotion_scores = emotions[0]["emotions"]
-    emotion = max(emotion_scores, key=emotion_scores.get)
+    emotion, confidence = max(
+        emotions[0]["emotions"].items(),
+        key=lambda x: x[1]
+    )
 
-    stress_percentage = STRESS_MAP.get(emotion, 50)
-    stress_level = get_stress_level(stress_percentage)
+    if confidence < 0.40:
+        return None
+
+    base = stress_weights.get(emotion, 50)
+    stress_percentage = int(base * confidence)
+
+    stress_level = classify_stress(emotion)
     recommendations = get_recommendations(stress_level)
 
     return {
         "emotion": emotion,
-        "stress_percentage": stress_percentage,
+        "confidence": round(confidence, 2),
         "stress_level": stress_level,
+        "stress_percentage": stress_percentage,
         "recommendations": recommendations
     }

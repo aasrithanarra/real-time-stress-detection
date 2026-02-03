@@ -1,9 +1,8 @@
 streamlit
 streamlit-webrtc
-opencv-python-headless
-numpy
+fer==22.5.1
 tensorflow
 keras
-fer==22.5.1
+numpy
 mtcnn
-pillow
+av
