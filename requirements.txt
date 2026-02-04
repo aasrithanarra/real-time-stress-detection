@@ -1,2 +1,6 @@
-streamlit
+flask
+opencv-python
 numpy
+tensorflow
+keras
+fer==22.5.1
